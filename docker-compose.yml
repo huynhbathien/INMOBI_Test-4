@@ -1,0 +1,121 @@
+version: '3.9'
+
+services:
+  # Spring Boot Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: course-app
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/course_db
+      - SPRING_DATASOURCE_USERNAME_FILE=/run/secrets/mysql_user
+      - SPRING_DATASOURCE_PASSWORD_FILE=/run/secrets/mysql_password
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=validate
+      - SPRING_REDIS_HOST=redis
+      - SPRING_REDIS_PORT=6379
+      - SPRING_REDIS_PASSWORD_FILE=/run/secrets/redis_password
+      - JAVA_OPTS=-Xmx512m -Xms256m
+      - JWT_SECRET_FILE=/run/secrets/jwt_hs512_key
+      - SSL_KEY_STORE=/run/secrets/keystore.p12
+      - SSL_KEY_STORE_PASSWORD_FILE=/run/secrets/ssl_keystore_password
+      - SSL_KEY_ALIAS=tomcat
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - GOOGLE_REDIRECT_URI=${GOOGLE_REDIRECT_URI:-https://localhost:8080/login/oauth2/code/google}
+      - MAIL_USERNAME=${MAIL_USERNAME}
+      - MAIL_PASSWORD=${MAIL_PASSWORD}
+    secrets:
+      - jwt_hs512_key
+      - mysql_user
+      - mysql_password
+      - redis_password
+      - keystore_p12
+      - ssl_keystore_password
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - course-network
+    restart: unless-stopped
+
+  # MySQL Database
+  mysql:
+    image: mysql:8.3
+    container_name: course-mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD_FILE=/run/secrets/mysql_root_password
+      - MYSQL_DATABASE=course_db
+      - MYSQL_USER_FILE=/run/secrets/mysql_user
+      - MYSQL_PASSWORD_FILE=/run/secrets/mysql_password
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    secrets:
+      - mysql_root_password
+      - mysql_user
+      - mysql_password
+    networks:
+      - course-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: course-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    secrets:
+      - redis_password
+    networks:
+      - course-network
+    restart: unless-stopped
+    command: >
+      sh -c "redis-server --appendonly yes
+             --appendfsync everysec
+             --save 900 1
+             --save 300 10
+             --save 60 10000
+             --requirepass $$(cat /run/secrets/redis_password)"
+    healthcheck:
+      test: ["CMD", "sh", "-c", "redis-cli -a $$(cat /run/secrets/redis_password) ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  mysql_data:
+  redis_data:
+
+networks:
+  course-network:
+    driver: bridge
+
+secrets:
+  jwt_hs512_key:
+    file: ./secrets/jwt_hs512_key.txt
+  mysql_root_password:
+    file: ./secrets/mysql_root_password.txt
+  mysql_user:
+    file: ./secrets/mysql_user.txt
+  mysql_password:
+    file: ./secrets/mysql_password.txt
+  redis_password:
+    file: ./secrets/redis_password.txt
+  keystore_p12:
+    file: ./secrets/keystore.p12
+  ssl_keystore_password:
+    file: ./secrets/ssl_keystore_password.txt
+

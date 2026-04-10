@@ -1,0 +1,70 @@
+spring:
+  application:
+    name: game-application
+
+  # Data Source Configuration - Local MySQL
+  datasource:
+    url: jdbc:mysql://localhost:3306/game_db
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  # JPA Configuration
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        "[format_sql]": true
+        "[use_sql_comments]": true
+
+  # Jackson Configuration
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    time-zone: UTC
+    default-property-inclusion: non_null
+
+  # Security Configuration
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID:your-client-id}
+            client-secret: ${GOOGLE_CLIENT_SECRET:your-client-secret}
+            scope:
+              - email
+              - profile
+            redirect-uri: ${GOOGLE_REDIRECT_URI:https://localhost:8080/login/oauth2/code/google}
+
+# JWT Configuration
+jwt:
+  secret-file: secrets/jwt_hs512_key.txt
+  expiration: 86400000
+  refresh-expiration: 604800000
+
+# Server Configuration
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+
+# Logging Configuration - Verbose for development
+logging:
+  level:
+    root: INFO
+    "[com.mycompany]": DEBUG
+    "[org.springframework.web]": DEBUG
+    "[org.springframework.security]": DEBUG
+    "[org.hibernate.SQL]": DEBUG
+    "[org.hibernate.type.descriptor.sql.BasicBinder]": TRACE
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/application.log
+    max-size: 10MB
+    max-history: 10

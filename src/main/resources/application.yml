@@ -1,0 +1,144 @@
+spring:
+  application:
+    name: game-application
+
+  # Data Source Configuration
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3307/game_db}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  # JPA Configuration
+  jpa:
+    hibernate:
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:update}
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        "[format_sql]": true
+        "[use_sql_comments]": true
+        jdbc:
+          "[batch_size]": 20
+          "[fetch_size]": 50
+
+  # Redis Configuration
+  data:
+    redis:
+      host: ${SPRING_REDIS_HOST:localhost}
+      port: ${SPRING_REDIS_PORT:6379}
+      password: ${SPRING_REDIS_PASSWORD:}
+      timeout: 2000ms
+      jedis:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+          max-wait: -1ms
+
+  # Mail Configuration
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+        debug: false
+
+  # Jackson Configuration
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    time-zone: UTC
+    default-property-inclusion: non_null
+
+  # Security Configuration
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            scope:
+              - email
+              - profile
+            redirect-uri: ${GOOGLE_REDIRECT_URI:https://localhost:8080/login/oauth2/code/google}
+            client-name: Google
+            client-authentication-method: client_secret_basic
+            authorization-grant-type: authorization_code
+        provider:
+          google:
+            authorization-uri: https://accounts.google.com/o/oauth2/auth
+            token-uri: https://oauth2.googleapis.com/token
+            user-info-uri: https://openidconnect.googleapis.com/v1/userinfo
+            jwk-set-uri: https://www.googleapis.com/oauth2/v3/certs
+            user-name-attribute: email
+
+# JWT Configuration (Secret Key)
+jwt:
+  secret-file: ${JWT_SECRET_FILE:secrets/jwt_hs512_key.txt}
+
+# Token Configuration (Expiration times in seconds)
+token:
+  access-token-expiration: ${TOKEN_ACCESS_EXPIRATION:1800} # 30 minutes (15-30 minutes recommended)
+  refresh-token-expiration: ${TOKEN_REFRESH_EXPIRATION:604800} # 7 days (7-30 days recommended)
+
+# OTP Configuration
+otp:
+  expiry-minutes: ${OTP_EXPIRY_MINUTES:10} # OTP valid for 10 minutes
+
+# Game Configuration
+game:
+  win-rate: ${GAME_WIN_RATE:0.05}
+
+# Server Configuration
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+  compression:
+    enabled: true
+    min-response-size: 1024
+  ssl:
+    key-store: ${SSL_KEY_STORE:file:secrets/keystore.p12}
+    key-store-password: ${SSL_KEY_STORE_PASSWORD}
+    key-store-type: PKCS12
+    key-alias: ${SSL_KEY_ALIAS:tomcat}
+
+# Logging Configuration
+logging:
+  level:
+    root: INFO
+    "[com.mycompany]": DEBUG
+    "[org.springframework.web]": DEBUG
+    "[org.hibernate]": WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/application.log
+    max-size: 10MB
+    max-history: 10
+
+# Management (Actuator)
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+# Security Configuration
+security:
+  brute-force:
+    max-attempts: 5 # Lock after 5 failed login attempts
+    block-duration-minutes: 15 # Block duration in minutes
