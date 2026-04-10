@@ -1,0 +1,51 @@
+# Maven
+target/
+.m2/
+*.jar
+*.war
+*.zip
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# Git
+.git
+.gitignore
+
+# Maven Wrapper
+!/.mvn/wrapper/maven-wrapper.jar
+
+# Documentation
+*.md
+README.md
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Node (if any frontend)
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# OS
+Thumbs.db
+.DS_Store
+
